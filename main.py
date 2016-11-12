@@ -42,16 +42,16 @@ class minHashing:
 	def characteristic_matrix(self):
 		''' Creates the characteristic matrix of sets, only returns the positions where there is 1.   M(# shnigles, # sets); we count row per row (i.e: index k means where at the k//i row and k%i column) 
 		''' 
-		M=np.zeros((len(self.key), len(self.sets)))
-		print 'len key', len(self.key)
-		print hash_dictionary
+		#M2=np.zeros((len(self.key), len(self.sets))) # if we want to see the sparse matrix
+		M=list()		
 		for i in xrange(len(self.key)):
 			for j in xrange(len(self.sets)):
 				k=0
 				while k <len(self.sets[j]) and self.sets[j][k]!=self.key[i]:
 					k+=1
 				if k<len(self.sets[j]):
-					M[i,j]=1
+					M.append(i*len(self.sets)+j)
+					#M2[i,j]=1
 		return M
 
 #	def permutations(self):
@@ -71,7 +71,6 @@ def compareSets(hash1, hash2):
 	'''
 	inter=np.intersect1d(hash1, hash2)
 	union=set(hash1+hash2)
-	#print union
 	return len(inter)/float(len(union))
 
 
@@ -106,7 +105,7 @@ intersec=compareSets(I.hashed_values, H.hashed_values)
 print 'Jaccard similarity:', intersec
 
 # minHashing class test
-minH=minHashing([G.hashed_values, I.hashed_values, H.hashed_values], 10)
+minH=minHashing([ I.hashed_values, H.hashed_values], 10)
 print minH.M[:0]==minH.M[:1]
 print minH.M
 
