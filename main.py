@@ -1,6 +1,6 @@
 import numpy as np
 import copy as cp
-
+import random
 ###########################################################
 #                       Class definition
 ###########################################################
@@ -12,7 +12,7 @@ class Shingling:
 		'''
 		self.k=size # shingle size
 		self.file=doc 
-		self.hashed_values=[]
+		self.hashed_values=list()
 
 	def shingle(self):
 		global shingle_dictionary
@@ -54,10 +54,26 @@ class minHashing:
 					#M2[i,j]=1
 		return M
 
-#	def permutations(self):
-#		permute=cp.deepcopy()
+	def permutations(self):
+		''' Permute randomly the sequence of the keys of hash_value dictionary
+		'''
+		permute=cp.deepcopy(self.key)
+		random.shuffle(permute)
+		return permute
 
-
+	def minhash(self):
+		p=self.permutations()
+		sign=np.zeros(len(self.sets), dtype=int)
+		print p
+		print hash_dictionary
+		print self.key
+		print self.M
+		for j in xrange(len(self.sets)):
+			for i in xrange(len(p)):
+				if p[i]*len(self.sets)+j in self.M:
+					sign[j]=i
+					break					
+		return np.transpose(sign) # returns row of signature matrix
 
 
 
@@ -105,9 +121,10 @@ intersec=compareSets(I.hashed_values, H.hashed_values)
 print 'Jaccard similarity:', intersec
 
 # minHashing class test
-minH=minHashing([ I.hashed_values, H.hashed_values], 10)
-print minH.M[:0]==minH.M[:1]
-print minH.M
+minH=minHashing([ H.hashed_values, I.hashed_values], 10)
+#print minH.M[:0]==minH.M[:1]
+#print minH.M
+print minH.minhash()
 
 
 
