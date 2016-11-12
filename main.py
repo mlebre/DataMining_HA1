@@ -1,4 +1,5 @@
 import numpy as np
+import copy as cp
 
 ###########################################################
 #                       Class definition
@@ -12,7 +13,6 @@ class Shingling:
 		self.k=size # shingle size
 		self.file=doc 
 		self.hashed_values=[]
-
 
 	def shingle(self):
 		global shingle_dictionary
@@ -33,22 +33,29 @@ class Shingling:
 
 
 class minHashing:
-	def __init__(self, set1, n):
-		#assert  
-		self.set=set1 # set is under hashed value forms
-		self.nPermutations=n
-		self.M=list() # characteristic matrix
-		self.key=(hash_dictionary.keys()) # tuple to be sure we always work with the same list of keys (same order)
+	def __init__(self, sets, n=10): 
+		self.sets=sets # sets are under hashed value forms, given as a list
+		self.nPermutations=n 
+		self.key=(hash_dictionary.keys()) # tuple --> always work with the same list of keys
+		self.M=self.characteristic_matrix()
 
 	def characteristic_matrix(self):
-		''' Creates the characteristic matrix of the set, only returns the positions where there is 1
+		''' Creates the characteristic matrix of sets, only returns the positions where there is 1.   M(# shnigles, # sets); we count row per row (i.e: index k means where at the k//i row and k%i column) 
 		''' 
-		for i in xrange(len(self.set)):
-			j=0
-			while self.set[i]!=self.key[j]:
-				j+=1
-				continue
-			self.M.append(self.key[j]) 
+		M=np.zeros((len(self.key), len(self.sets)))
+		print 'len key', len(self.key)
+		print hash_dictionary
+		for i in xrange(len(self.key)):
+			for j in xrange(len(self.sets)):
+				k=0
+				while k <len(self.sets[j]) and self.sets[j][k]!=self.key[i]:
+					k+=1
+				if k<len(self.sets[j]):
+					M[i,j]=1
+		return M
+
+#	def permutations(self):
+#		permute=cp.deepcopy()
 
 
 
@@ -93,14 +100,15 @@ H.shingle()
 doc3='c.txt'
 I=Shingling(doc3,shigling_size)
 I.shingle()
-print len(hash_dictionary)
 
-intersec=compareSets(G.hashed_values, H.hashed_values)
+
+intersec=compareSets(I.hashed_values, H.hashed_values)
 print 'Jaccard similarity:', intersec
 
-minH=minHashing(I.hashed_values, 10)
-minH.characteristic_matrix()
-
+# minHashing class test
+minH=minHashing([G.hashed_values, I.hashed_values, H.hashed_values], 10)
+print minH.M[:0]==minH.M[:1]
 print minH.M
-for i in xrange(len(minH.M)):
-	print list(hash_dictionary[minH.M[i]])
+
+
+
