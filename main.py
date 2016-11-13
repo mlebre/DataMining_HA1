@@ -64,15 +64,16 @@ class minHashing:
 	def minhash(self):
 		p=self.permutations()
 		sign=np.zeros(len(self.sets), dtype=int)
-		print p
+		print 'Permutation:', p
 		print hash_dictionary
-		print self.key
-		print self.M
+		print 'Key', self.key
+		print 'M', self.M
 		for j in xrange(len(self.sets)):
 			for i in xrange(len(p)):
-				if p[i]*len(self.sets)+j in self.M:
-					sign[j]=i
-					break					
+				if (p[i]-1)*len(self.sets)+j in self.M: # -1 because index in M and keys are not synchronized
+					sign[j]=i+1 # Position in sign matrix starts to one (like in the slides)
+					break
+		print np.transpose(sign)					
 		return np.transpose(sign) # returns row of signature matrix
 
 
@@ -121,10 +122,11 @@ intersec=compareSets(I.hashed_values, H.hashed_values)
 print 'Jaccard similarity:', intersec
 
 # minHashing class test
-minH=minHashing([ H.hashed_values, I.hashed_values], 10)
+minH=minHashing([G.hashed_values, H.hashed_values, I.hashed_values], 10)
 #print minH.M[:0]==minH.M[:1]
 #print minH.M
-print minH.minhash()
+random.seed(5)
+minH.minhash()
 
 
 
