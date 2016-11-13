@@ -32,12 +32,13 @@ class Shingling:
 		fi.close()
 
 
-class minHashing:
+class MinHashing:
 	def __init__(self, sets, n=10): 
 		self.sets=sets # sets are under hashed value forms, given as a list
 		self.nPermutations=n 
 		self.key=(hash_dictionary.keys()) # tuple --> always work with the same list of keys
 		self.M=self.characteristic_matrix()
+		self.signM=None
 
 	def characteristic_matrix(self):
 		''' Creates the characteristic matrix of sets, only returns the positions where there is 1.   M(# shnigles, # sets); we count row per row (i.e: index k means where at the k//i row and k%i column) 
@@ -62,34 +63,41 @@ class minHashing:
 		return permute
 
 	def minhash(self):
+		''' For one permutation, return the associated row in the signature matrix
+		'''
 		p=self.permutations()
-		sign=np.zeros(len(self.sets), dtype=int)
-		print 'Permutation:', p
-		print hash_dictionary
-		print 'Key', self.key
-		print 'M', self.M
+		rowSign=np.zeros(len(self.sets), dtype=int)
 		for j in xrange(len(self.sets)):
 			for i in xrange(len(p)):
 				if (p[i]-1)*len(self.sets)+j in self.M: # -1 because index in M and keys are not synchronized
-					sign[j]=i+1 # Position in sign matrix starts to one (like in the slides)
-					break
-		print np.transpose(sign)					
-		return np.transpose(sign) # returns row of signature matrix
+					rowSign[j]=i+1 # Position in sign matrix starts to one (like in the slides)
+					break					
+		return np.transpose(rowSign) # returns row of signature matrix
 
+	def signMatrix(self):
+		self.signM=np.zeros((self.nPermutations, len(self.sets)))
+		for n in xrange(self.nPermutations):
+			self.signM[n,:]=self.minhash()
 
+	def compareSignatures(self, sign1, sign2):
+		inter=0
+		for i in xrange(len(sign1)):
+			if sign1[i]==sign2[i]:
+				inter+=1
+		return inter/float(len(sign1))
+
+ 
 
 
 ###########################################################
 #                   Function definition
 ###########################################################
-
-def compareSets(hash1, hash2):
-	''' Return the Jaccard similarity of 2 sets of of hash values
-	'''
-	inter=np.intersect1d(hash1, hash2)
-	union=set(hash1+hash2)
-	return len(inter)/float(len(union))
-
+def compareSets(hash1, hash2, self=0):
+		''' Return the Jaccard similarity of 2 sets of of hash values
+		'''
+		inter=np.intersect1d(hash1, hash2)
+		union=set(hash1+hash2)
+		return len(inter)/float(len(union))
 
  				
 
@@ -102,31 +110,30 @@ shingle_dictionary={} # key = shingle, value = hash value; one unical value for 
 hash_dictionary={} # key = hash value, value = shingle; one unical value for one key
 
 
-shigling_size=1
-#doc1='Data/Part1/awards_1990/awd_1990_00/a9000006.txt'
-doc1='a.txt'
+shigling_size=9
+doc1='Data/Part1/awards_1990/awd_1990_00/a9000006.txt'
+#doc1='a.txt'
 G=Shingling(doc1, shigling_size)
 G.shingle()
 
-#doc2='Data/Part1/awards_1990/awd_1990_00/a9000031.txt'
-doc2='b.txt'
+doc2='Data/Part1/awards_1990/awd_1990_00/a9000031.txt'
+#doc2='b.txt'
 H=Shingling(doc2, shigling_size)
 H.shingle()
 
-doc3='c.txt'
+doc3='Data/Part1/awards_1990/awd_1990_00/a9000031.txt'
+#doc3='c.txt'
 I=Shingling(doc3,shigling_size)
 I.shingle()
 
 
-intersec=compareSets(I.hashed_values, H.hashed_values)
+intersec=compareSets(G.hashed_values, H.hashed_values)
 print 'Jaccard similarity:', intersec
 
 # minHashing class test
-minH=minHashing([G.hashed_values, H.hashed_values, I.hashed_values], 10)
-#print minH.M[:0]==minH.M[:1]
-#print minH.M
-random.seed(5)
-minH.minhash()
-
-
+minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values], 100)
+#random.seed(5)
+minH.signMatrix()
+print '\n', minH.signM
+print minH.compareSignatures(minH.signM[:,1], minH.signM[:,2])
 
