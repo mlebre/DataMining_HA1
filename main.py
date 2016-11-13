@@ -1,3 +1,9 @@
+###########################################################
+#                  Data Mining KTH
+#         Homework 1: Finding similar items 
+###########################################################
+
+
 import numpy as np
 import copy as cp
 import random
@@ -87,22 +93,27 @@ class MinHashing:
 		return inter/float(len(sign1))
 
  
+class CompareSets:
+	def __init__(self, hash1, hash2):
+		self.set1=hash1
+		self.set2=hash2
+
+	def jaccard(self):
+		''' Return the Jaccard similarity of 2 sets of of hash values
+		'''
+		inter=np.intersect1d(self.set1, self.set2)
+		union=set(self.set1+self.set2)
+		return len(inter)/float(len(union))
 
 
 ###########################################################
 #                   Function definition
 ###########################################################
-def compareSets(hash1, hash2, self=0):
-		''' Return the Jaccard similarity of 2 sets of of hash values
-		'''
-		inter=np.intersect1d(hash1, hash2)
-		union=set(hash1+hash2)
-		return len(inter)/float(len(union))
 
  				
 
 ###########################################################
-#                           MAIN
+#                      MAIN
 ###########################################################
 
 # Global dictionaries used to stock shingles and hash values, 
@@ -110,6 +121,7 @@ shingle_dictionary={} # key = shingle, value = hash value; one unical value for 
 hash_dictionary={} # key = hash value, value = shingle; one unical value for one key
 
 
+# Shingling of documents
 shigling_size=9
 doc1='Data/Part1/awards_1990/awd_1990_00/a9000006.txt'
 #doc1='a.txt'
@@ -120,20 +132,28 @@ doc2='Data/Part1/awards_1990/awd_1990_00/a9000031.txt'
 #doc2='b.txt'
 H=Shingling(doc2, shigling_size)
 H.shingle()
-
-doc3='Data/Part1/awards_1990/awd_1990_00/a9000031.txt'
+doc3='Data/Part1/awards_1990/awd_1990_02/a9002020.txt'
 #doc3='c.txt'
 I=Shingling(doc3,shigling_size)
 I.shingle()
 
+doc4='Data/Part1/awards_1990/awd_1990_02/a9002147.txt'
+#doc3='c.txt'
+J=Shingling(doc4,shigling_size)
+J.shingle()
 
-intersec=compareSets(G.hashed_values, H.hashed_values)
-print 'Jaccard similarity:', intersec
 
-# minHashing class test
-minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values], 100)
+# Jaccard similarity of two of them
+intersec=CompareSets(G.hashed_values, H.hashed_values)
+js=intersec.jaccard()
+print 'Jaccard similarity:', js
+
+
+
+# minHashing 
+minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], 100)
 #random.seed(5)
 minH.signMatrix()
-print '\n', minH.signM
+#print '\n', minH.signM
 print minH.compareSignatures(minH.signM[:,1], minH.signM[:,2])
 
