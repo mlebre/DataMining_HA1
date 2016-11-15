@@ -7,6 +7,7 @@
 import numpy as np
 import copy as cp
 import random
+import itertools
 ###########################################################
 #                       Class definition
 ###########################################################
@@ -30,11 +31,13 @@ class Shingling:
 		for i in xrange(len(text)):
 			if i+self.k>len(text):
 				break # avoid to create shingle under secified size
+			self.hashed_values.append(hash(text[i:i+self.k]))
+			'''
 			if text[i:i+self.k] not in shingle_dictionary.keys():
 				# Creates an entry in dictionnaries for new shingle
 				shingle_dictionary[text[i:i+self.k]]=len(shingle_dictionary)+1
-				hash_dictionary[shingle_dictionary[text[i:i+self.k]]]=text[i:i+self.k]
-			self.hashed_values.append(shingle_dictionary[text[i:i+self.k]]) # at the ith case of self.hashed_value there is the hash value associated to the ith shingle
+				hash_dictionary[shingle_dictionary[text[i:i+self.k]]]=text[i:i+self.k
+			self.hashed_values.append(shingle_dictionary[text[i:i+self.k]]) # at the ith case of self.hashed_value there is the hash value associated to the ith shingle'''
 		fi.close()
 
 
@@ -42,9 +45,11 @@ class MinHashing:
 	def __init__(self, sets, n=10): 
 		self.sets=sets # sets are under hashed value forms, given as a list
 		self.nPermutations=n 
-		self.key=(hash_dictionary.keys()) # tuple --> always work with the same list of keys
+		self.key=list(set(itertools.chain.from_iterable(self.sets)))
 		self.M=self.characteristic_matrix()
 		self.signM=None
+
+	
 
 	def characteristic_matrix(self):
 		''' Creates the characteristic matrix of sets, only returns the positions where there is 1.   M(# shnigles, # sets); we count row per row (i.e: index k means where at the k//i row and k%i column) 
@@ -58,7 +63,7 @@ class MinHashing:
 					k+=1
 				if k<len(self.sets[j]):
 					M.append(i*len(self.sets)+j)
-					#M2[i,j]=1
+					#M2[i,j]=1	
 		return M
 
 	def permutations(self):
@@ -68,6 +73,12 @@ class MinHashing:
 		random.shuffle(permute)
 		return permute
 
+	def findShinglePositions(self, hashValue):
+		for i in xrange(len(self.key)):
+			if hashValue==self.key[i]:
+				return i
+		print 'Hash value in permutation not in the list of hash values; ERROR!!'
+
 	def minhash(self):
 		''' For one permutation, return the associated row in the signature matrix
 		'''
@@ -75,7 +86,8 @@ class MinHashing:
 		rowSign=np.zeros(len(self.sets), dtype=int)
 		for j in xrange(len(self.sets)):
 			for i in xrange(len(p)):
-				if (p[i]-1)*len(self.sets)+j in self.M: # -1 because index in M and keys are not synchronized
+				pos=self.findShinglePositions(p[i])
+				if pos*len(self.sets)+j in self.M:
 					rowSign[j]=i+1 # Position in sign matrix starts to one (like in the slides)
 					break					
 		return np.transpose(rowSign) # returns row of signature matrix
@@ -116,29 +128,27 @@ class CompareSets:
 #                      MAIN
 ###########################################################
 
-# Global dictionaries used to stock shingles and hash values, 
-shingle_dictionary={} # key = shingle, value = hash value; one unical value for one key
-hash_dictionary={} # key = hash value, value = shingle; one unical value for one key
 
 
 # Shingling of documents
-shigling_size=9
+shigling_size=1
 doc1='Data/Part1/awards_1990/awd_1990_00/a9000006.txt'
 #doc1='a.txt'
 G=Shingling(doc1, shigling_size)
 G.shingle()
 
-doc2='Data/Part1/awards_1990/awd_1990_00/a9000031.txt'
-#doc2='b.txt'
+#doc2='Data/Part1/awards_1990/awd_1990_00/a9000031.txt'
+doc2='b.txt'
 H=Shingling(doc2, shigling_size)
 H.shingle()
+
 doc3='Data/Part1/awards_1990/awd_1990_02/a9002020.txt'
 #doc3='c.txt'
 I=Shingling(doc3,shigling_size)
 I.shingle()
 
 doc4='Data/Part1/awards_1990/awd_1990_02/a9002147.txt'
-#doc3='c.txt'
+doc4='c.txt'
 J=Shingling(doc4,shigling_size)
 J.shingle()
 
@@ -154,6 +164,6 @@ print 'Jaccard similarity:', js
 minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], 100)
 #random.seed(5)
 minH.signMatrix()
-#print '\n', minH.signM
-print minH.compareSignatures(minH.signM[:,1], minH.signM[:,2])
+#print minH.signM
+print 'Similarity of signatures:', minH.compareSignatures(minH.signM[:,3], minH.signM[:,2])
 
