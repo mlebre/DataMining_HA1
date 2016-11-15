@@ -32,12 +32,6 @@ class Shingling:
 			if i+self.k>len(text):
 				break # avoid to create shingle under secified size
 			self.hashed_values.append(hash(text[i:i+self.k]))
-			'''
-			if text[i:i+self.k] not in shingle_dictionary.keys():
-				# Creates an entry in dictionnaries for new shingle
-				shingle_dictionary[text[i:i+self.k]]=len(shingle_dictionary)+1
-				hash_dictionary[shingle_dictionary[text[i:i+self.k]]]=text[i:i+self.k
-			self.hashed_values.append(shingle_dictionary[text[i:i+self.k]]) # at the ith case of self.hashed_value there is the hash value associated to the ith shingle'''
 		fi.close()
 
 
@@ -99,22 +93,25 @@ class MinHashing:
 
 	def compareSignatures(self, sign1, sign2):
 		inter=0
+		union=0
 		for i in xrange(len(sign1)):
 			if sign1[i]==sign2[i]:
 				inter+=1
-		return inter/float(len(sign1))
+			else:
+				union+=1 # perform union for each line
+		return float(inter)/float(union+inter)
 
  
 class CompareSets:
 	def __init__(self, hash1, hash2):
-		self.set1=hash1
-		self.set2=hash2
+		self.set1=set(hash1)
+		self.set2=set(hash2)
 
 	def jaccard(self):
 		''' Return the Jaccard similarity of 2 sets of of hash values
 		'''
-		inter=np.intersect1d(self.set1, self.set2)
-		union=set(self.set1+self.set2)
+		inter=self.set1.intersection(self.set2)
+		union=self.set1.union(self.set2)
 		return len(inter)/float(len(union))
 
 
@@ -131,14 +128,14 @@ class CompareSets:
 
 
 # Shingling of documents
-shigling_size=1
-doc1='Data/Part1/awards_1990/awd_1990_00/a9000006.txt'
+shigling_size=9
+doc1='Data/Part1/awards_1990/awd_1990_00/a9000255.txt'
 #doc1='a.txt'
 G=Shingling(doc1, shigling_size)
 G.shingle()
 
-#doc2='Data/Part1/awards_1990/awd_1990_00/a9000031.txt'
-doc2='b.txt'
+doc2='Data/Part1/awards_1990/awd_1990_00/a9000256.txt'
+#doc2='b.txt'
 H=Shingling(doc2, shigling_size)
 H.shingle()
 
@@ -148,7 +145,7 @@ I=Shingling(doc3,shigling_size)
 I.shingle()
 
 doc4='Data/Part1/awards_1990/awd_1990_02/a9002147.txt'
-doc4='c.txt'
+#doc4='c.txt'
 J=Shingling(doc4,shigling_size)
 J.shingle()
 
@@ -161,9 +158,9 @@ print 'Jaccard similarity:', js
 
 
 # minHashing 
-minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], 100)
+minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], 1000)
 #random.seed(5)
 minH.signMatrix()
 #print minH.signM
-print 'Similarity of signatures:', minH.compareSignatures(minH.signM[:,3], minH.signM[:,2])
+print 'Similarity of signatures:', minH.compareSignatures(minH.signM[:,0], minH.signM[:,1])
 
