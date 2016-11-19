@@ -19,31 +19,26 @@ class Shingling:
 		'''
 		self.k=size # shingle size
 		self.file=doc 
-		self.hashed_values=list()
+		self.hashed_values=set()
 
 	def shingle(self):
-		global shingle_dictionary
-		global hash_dictionary
 		fi=open(self.file, 'r')
 		text=str()
 		for line in fi:
 			text=text+line # layout of the document taken in count
-		for i in xrange(len(text)):
-			if i+self.k>len(text):
-				break # avoid to create shingle under secified size
-			self.hashed_values.append(hash(text[i:i+self.k]))
+		for i in xrange(len(text)-self.k+1): # -k to avoid to create shingle under specified size, +1 because it can be <= of len(text)
+			#print len(text[i:i+self.k])
+			self.hashed_values.add(hash(text[i:i+self.k]))
 		fi.close()
 
 
 class MinHashing:
 	def __init__(self, sets, n=10): 
-		self.sets=sets # sets are under hashed value forms, given as a list
+		self.sets=sets # sets are under hashed value forms, given in a listas set
 		self.nPermutations=n 
 		self.key=list(set(itertools.chain.from_iterable(self.sets)))
 		self.M=self.characteristic_matrix()
 		self.signM=None
-
-	
 
 	def characteristic_matrix(self):
 		''' Creates the characteristic matrix of sets, only returns the positions where there is 1.   M(# shnigles, # sets); we count row per row (i.e: index k means where at the k//i row and k%i column) 
@@ -52,8 +47,9 @@ class MinHashing:
 		M=list()		
 		for i in xrange(len(self.key)):
 			for j in xrange(len(self.sets)):
+				hash_list=list(self.sets[j])
 				k=0
-				while k <len(self.sets[j]) and self.sets[j][k]!=self.key[i]:
+				while k <len(hash_list) and hash_list[k]!=self.key[i]:
 					k+=1
 				if k<len(self.sets[j]):
 					M.append(i*len(self.sets)+j)
@@ -83,8 +79,8 @@ class MinHashing:
 				pos=self.findShinglePositions(p[i])
 				if pos*len(self.sets)+j in self.M:
 					rowSign[j]=i+1 # Position in sign matrix starts to one (like in the slides)
-					break					
-		return np.transpose(rowSign) # returns row of signature matrix
+					break # We find the first position				
+		return np.transpose(rowSign) # return row of signature matrix
 
 	def signMatrix(self):
 		self.signM=np.zeros((self.nPermutations, len(self.sets)))
@@ -104,8 +100,8 @@ class MinHashing:
  
 class CompareSets:
 	def __init__(self, hash1, hash2):
-		self.set1=set(hash1)
-		self.set2=set(hash2)
+		self.set1=hash1
+		self.set2=hash2
 
 	def jaccard(self):
 		''' Return the Jaccard similarity of 2 sets of of hash values
@@ -158,7 +154,8 @@ print 'Jaccard similarity:', js
 
 
 # minHashing 
-minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], 1000)
+minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], 10000)
+#print minH.key
 #random.seed(5)
 minH.signMatrix()
 #print minH.signM
