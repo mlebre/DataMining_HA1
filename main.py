@@ -8,26 +8,26 @@ import numpy as np
 import copy as cp
 import random
 import itertools
+import scipy 
+
 ###########################################################
 #                       Class definition
 ###########################################################
 class Shingling:
 
 	def __init__(self, doc, size=5):
-		''' Construct shingles of length size (default value 5) 
-		    from the document name given
-		'''
 		self.k=size # shingle size
 		self.file=doc 
 		self.hashed_values=set()
 
 	def shingle(self):
+		''' Construct shingles of length size (default value 5) from the associated document 
+		'''
 		fi=open(self.file, 'r')
 		text=str()
 		for line in fi:
 			text=text+line # layout of the document taken in count
 		for i in xrange(len(text)-self.k+1): # -k to avoid to create shingle under specified size, +1 because it can be <= of len(text)
-			#print len(text[i:i+self.k])
 			self.hashed_values.add(hash(text[i:i+self.k]))
 		fi.close()
 
@@ -64,6 +64,8 @@ class MinHashing:
 		return permute
 
 	def findShinglePositions(self, hashValue):
+		''' Find the number of line in characteristic matrix wich correspond to the hash value of permutation
+		'''
 		for i in xrange(len(self.key)):
 			if hashValue==self.key[i]:
 				return i
@@ -88,6 +90,8 @@ class MinHashing:
 			self.signM[n,:]=self.minhash()
 
 	def compareSignatures(self, sign1, sign2):
+		''' From two signatures, return the jaccard similarity of the 2 documents 
+		'''
 		inter=0
 		union=0
 		for i in xrange(len(sign1)):
@@ -111,6 +115,19 @@ class CompareSets:
 		return len(inter)/float(len(union))
 
 
+class LSH:
+	def __init__(signatures, threshold):
+		self.t=threshold
+		self.signs=signatures # given as a list
+		self.r=rbCalculation()[0]
+		self.b=rbCalculation()[1]
+
+	# def rbCalculation:
+		
+
+	
+		
+
 ###########################################################
 #                   Function definition
 ###########################################################
@@ -121,27 +138,24 @@ class CompareSets:
 #                      MAIN
 ###########################################################
 
+doc1='Data/Part1/awards_1990/awd_1990_00/a9000255.txt'
+#doc1='a.txt'
+doc2='Data/Part1/awards_1990/awd_1990_00/a9000256.txt'
+#doc2='b.txt'
+doc3='Data/Part1/awards_1990/awd_1990_02/a9002020.txt'
+#doc3='c.txt'
+doc4='Data/Part1/awards_1990/awd_1990_02/a9002147.txt'
+#doc4='c.txt'
 
 
 # Shingling of documents
 shigling_size=9
-doc1='Data/Part1/awards_1990/awd_1990_00/a9000255.txt'
-#doc1='a.txt'
 G=Shingling(doc1, shigling_size)
 G.shingle()
-
-doc2='Data/Part1/awards_1990/awd_1990_00/a9000256.txt'
-#doc2='b.txt'
 H=Shingling(doc2, shigling_size)
 H.shingle()
-
-doc3='Data/Part1/awards_1990/awd_1990_02/a9002020.txt'
-#doc3='c.txt'
 I=Shingling(doc3,shigling_size)
 I.shingle()
-
-doc4='Data/Part1/awards_1990/awd_1990_02/a9002147.txt'
-#doc4='c.txt'
 J=Shingling(doc4,shigling_size)
 J.shingle()
 
@@ -154,10 +168,13 @@ print 'Jaccard similarity:', js
 
 
 # minHashing 
-minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], 10000)
-#print minH.key
+n=100 # number of permutations
+minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], n)
 #random.seed(5)
 minH.signMatrix()
-#print minH.signM
 print 'Similarity of signatures:', minH.compareSignatures(minH.signM[:,0], minH.signM[:,1])
+
+
+# Locality sensitive hashing
+
 
