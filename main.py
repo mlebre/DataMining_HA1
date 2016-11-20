@@ -85,7 +85,7 @@ class MinHashing:
 		return np.transpose(rowSign) # return row of signature matrix
 
 	def signMatrix(self):
-		self.signM=np.zeros((self.nPermutations, len(self.sets)))
+		self.signM=np.zeros((self.nPermutations, len(self.sets)), dtype=int)
 		for n in xrange(self.nPermutations):
 			self.signM[n,:]=self.minhash()
 
@@ -116,13 +116,63 @@ class CompareSets:
 
 
 class LSH:
-	def __init__(signatures, threshold):
+	def __init__(self,signatureMatrix,rows,bands,threshold=0.5):
 		self.t=threshold
-		self.signs=signatures # given as a list
-		self.r=rbCalculation()[0]
-		self.b=rbCalculation()[1]
+		self.signM=signatureMatrix # signature Matrix
+		self.r= rows#rbCalculation()[0]
+		self.b= bands#rbCalculation()[1]
+		self.bandM=np.zeros((self.b,self.signM.shape[1]), dtype=int)
+		self.simPairs=set()
 
 	# def rbCalculation:
+
+	def banding(self):
+		''' Partition of signM into b bands of r rowSign
+		'''
+		#for each b take r rows and hash the value
+		i=0
+		band=0 # indicate in which band (so row number in bandM) we work
+		while i<self.b*self.r:
+			for j in xrange(self.signM.shape[1]):
+				val=np.array_str(self.signM[i:i+self.r,j]).strip('[] ') # turn band for each set into a str
+				val=int(val.replace(' ','')) # creation of a new number by concatenation of all number of the band for the set
+				self.bandM[band,j]=hash(val)
+			band+=1
+			i+=self.r
+		print self.bandM
+
+	def candidatePairs(self):
+		candPairs=set()
+		for i in xrange(self.b):
+			for j in xrange(self.signM.shape[1]):
+				wo_j=np.delete(self.bandM[i,], j)
+				if self.bandM[i,j] in wo_j : # np.delete deletes the value at [i,j] in the line i
+					ind=np.where(self.bandM[i,]==self.bandM[i,j])[0]
+					for k in xrange(len(ind)):
+						if j<ind[k]:
+							candPairs.add((j,ind[k]))
+						elif j>ind[k]:
+							candPairs.add((ind[k],j))
+		return candPairs
+
+	def compPairs(self, candPairs):
+		pairs=list(candPairs)
+		for i in xrange(len(pairs)):
+			count=0
+			for j in xrange(self.signM.shape[0]):
+				if self.signM[j,pairs[i][0]]==self.signM[j,pairs[i][1]]:
+					count+=1
+			if count/float(self.signM.shape[0]) >= self.t:
+				#print 'Pair\'s signatures', pairs[i], 'are similar at least at', self.t, '.'
+				self.simPairs.add(pairs[i])
+			else:
+				'Wrong estimation'
+
+
+	def application(self):
+		self.banding()
+		cP=self.candidatePairs()
+		self.compPairs(cP)
 		
 
 	
@@ -138,18 +188,20 @@ class LSH:
 #                      MAIN
 ###########################################################
 
+'''
+doc1='a.txt'
+doc2='b.txt'
+doc3='c.txt'
+doc4='c.txt'
+'''
 doc1='Data/Part1/awards_1990/awd_1990_00/a9000255.txt'
-#doc1='a.txt'
 doc2='Data/Part1/awards_1990/awd_1990_00/a9000256.txt'
-#doc2='b.txt'
 doc3='Data/Part1/awards_1990/awd_1990_02/a9002020.txt'
-#doc3='c.txt'
-doc4='Data/Part1/awards_1990/awd_1990_02/a9002147.txt'
-#doc4='c.txt'
-
+doc4='Data/Part1/awards_1990/awd_1990_02/a9002020.txt'
+doc5='Data/Part1/awards_1990/awd_1990_02/a9000127.txt'
 
 # Shingling of documents
-shigling_size=9
+shigling_size=5
 G=Shingling(doc1, shigling_size)
 G.shingle()
 H=Shingling(doc2, shigling_size)
@@ -168,13 +220,18 @@ print 'Jaccard similarity:', js
 
 
 # minHashing 
+#random.seed(5)
 n=100 # number of permutations
 minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], n)
-#random.seed(5)
 minH.signMatrix()
 print 'Similarity of signatures:', minH.compareSignatures(minH.signM[:,0], minH.signM[:,1])
 
 
 # Locality sensitive hashing
-
-
+T=0.8
+r=5
+b=20
+#print minH.signM
+LSH=LSH(minH.signM,r,b,T)
+LSH.application()
+print LSH.simPairs
