@@ -35,7 +35,8 @@ class Shingling:
 
 
 class MinHashing:
-	def __init__(self, sets, n=10): 
+	def __init__(self, sets,files, n=10): 
+		self.file_name=files # Name of the files
 		self.sets=sets # sets are under hashed value forms, given in a listas set
 		self.nPermutations=n 
 		self.key=list(set(itertools.chain.from_iterable(self.sets)))
@@ -118,13 +119,14 @@ class CompareSets:
 
 
 class LSH:
-	def __init__(self,signatureMatrix,rows,bands,threshold=0.5):
+	def __init__(self,signatureMatrix,rows,bands,threshold, file_name):
 		self.t=threshold
 		self.signM=signatureMatrix # signature Matrix
 		self.r= rows#rbCalculation()[0]
 		self.b= bands#rbCalculation()[1]
 		self.bandM=np.zeros((self.b,self.signM.shape[1]), dtype=int)
 		self.simPairs=set()
+		self.file_name=file_name
 
 	def banding(self):
 		''' Partition of signM into b bands of r rowSign and construction of the associated matrix with hashed_values
@@ -172,6 +174,11 @@ class LSH:
 				#print 'Pair\'s signatures', pairs[i], 'are similar at least at', self.t, '.'
 				self.simPairs.add(pairs[i])
 
+	def indToNames(self):
+		simPairs=list(self.simPairs)
+		for i in xrange(len(simPairs)):
+			print 'Candidate pairs of signatures that agree on at least for', self.t*100, '% of their components:'
+			print self.file_name[simPairs[i][0]], 'and', self.file_name[simPairs[i][1]]
 
 	def application(self):
 		''' Routine to apply LSH method
@@ -180,7 +187,7 @@ class LSH:
 		cP=self.candidatePairs()
 		#print cP
 		self.compPairs(cP)
-		
+		self.indToNames()
 
 	
 		
@@ -253,13 +260,14 @@ print 'Jaccard similarity:', js
 
 # minHashing 
 #random.seed(5)
-minH=MinHashing([A.hashed_values, B.hashed_values, C.hashed_values, D.hashed_values, E.hashed_values, F.hashed_values, G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], n)
+file_name=[doc1,doc2,doc3,doc4,doc5,doc6,doc7,doc8,doc9,doc10]
+minH=MinHashing([A.hashed_values, B.hashed_values, C.hashed_values, D.hashed_values, E.hashed_values, F.hashed_values, G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], file_name,n)
 minH.signMatrix()
 print 'Similarity of signatures:', minH.compareSignatures(minH.signM[:,2], minH.signM[:,3])
 
 
 # Locality sensitive hashing
-LSH=LSH(minH.signM,r,b,T)
+LSH=LSH(minH.signM,r,b,T, file_name)
 LSH.application()
-print 'Candidate pairs of signatures that agree on at least for', T*100, '% of their components:'
+
 print LSH.simPairs
