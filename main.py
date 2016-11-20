@@ -18,18 +18,20 @@ class Shingling:
 	def __init__(self, doc, size=5):
 		self.k=size # shingle size
 		self.file=doc 
-		self.hashed_values=set()
+		self.hashed_values=self.shingle()
 
 	def shingle(self):
 		''' Construct shingles of length size (default value 5) from the associated document 
 		'''
 		fi=open(self.file, 'r')
+		hashed_values=set()
 		text=str()
 		for line in fi:
 			text=text+line # layout of the document taken in count
 		for i in xrange(len(text)-self.k+1): # -k to avoid to create shingle under specified size, +1 because it can be <= of len(text)
-			self.hashed_values.add(hash(text[i:i+self.k]))
+			hashed_values.add(hash(text[i:i+self.k]))
 		fi.close()
+		return hashed_values
 
 
 class MinHashing:
@@ -127,7 +129,7 @@ class LSH:
 	# def rbCalculation:
 
 	def banding(self):
-		''' Partition of signM into b bands of r rowSign
+		''' Partition of signM into b bands of r rowSign and construction of the associated matrix with hashed_values
 		'''
 		#for each b take r rows and hash the value
 		i=0
@@ -139,9 +141,12 @@ class LSH:
 				self.bandM[band,j]=hash(val)
 			band+=1
 			i+=self.r
-		print self.bandM
+		#print self.bandM
 
 	def candidatePairs(self):
+		''' Look for documents which have at least one identical value for one band in the banding matrix
+			Return the set of the candidate pairs
+		'''
 		candPairs=set()
 		for i in xrange(self.b):
 			for j in xrange(self.signM.shape[1]):
@@ -149,13 +154,16 @@ class LSH:
 				if self.bandM[i,j] in wo_j : # np.delete deletes the value at [i,j] in the line i
 					ind=np.where(self.bandM[i,]==self.bandM[i,j])[0]
 					for k in xrange(len(ind)):
-						if j<ind[k]:
+						if j<ind[k]: # we always save the pair with the smallest number of doc in the beginning -->  avoid to save pair i,j and j,i
 							candPairs.add((j,ind[k]))
 						elif j>ind[k]:
 							candPairs.add((ind[k],j))
 		return candPairs
 
 	def compPairs(self, candPairs):
+		''' From the candidate pairs returned by the method candidatePairs, only those which have at 
+			least fraction t of their components identical in the signature matrix are conserved
+		'''
 		pairs=list(candPairs)
 		for i in xrange(len(pairs)):
 			count=0
@@ -165,13 +173,14 @@ class LSH:
 			if count/float(self.signM.shape[0]) >= self.t:
 				#print 'Pair\'s signatures', pairs[i], 'are similar at least at', self.t, '.'
 				self.simPairs.add(pairs[i])
-			else:
-				'Wrong estimation'
 
 
 	def application(self):
+		''' Routine to apply LSH method
+		'''
 		self.banding()
 		cP=self.candidatePairs()
+		#print cP
 		self.compPairs(cP)
 		
 
@@ -188,7 +197,8 @@ class LSH:
 #                      MAIN
 ###########################################################
 
-'''
+''' 
+# mini test files
 doc1='a.txt'
 doc2='b.txt'
 doc3='c.txt'
@@ -197,23 +207,36 @@ doc4='c.txt'
 doc1='Data/Part1/awards_1990/awd_1990_00/a9000255.txt'
 doc2='Data/Part1/awards_1990/awd_1990_00/a9000256.txt'
 doc3='Data/Part1/awards_1990/awd_1990_02/a9002020.txt'
-doc4='Data/Part1/awards_1990/awd_1990_02/a9002020.txt'
-doc5='Data/Part1/awards_1990/awd_1990_02/a9000127.txt'
+doc4='Data/Part1/awards_1990/awd_1990_02/a9002020.txt' # same document
+doc5='Data/Part1/awards_1990/awd_1990_00/a9000127.txt'
+doc6='Data/Part1/awards_1990/awd_1990_00/a9000143.txt'
+doc7='Data/Part1/awards_1994/awd_1994_02/a9402855.txt'
+doc8='Data/Part1/awards_1994/awd_1994_18/a9418378.txt'
+doc9='Data/Part1/awards_1994/awd_1994_18/a9418061.txt'
+doc10='Data/Part1/awards_1994/awd_1994_02/a9402021.txt'
+
+# Parameters
+shigling_size=9
+n=100 # number of permutations
+T=0.8
+r=5 # r*b=n !
+b=20
 
 # Shingling of documents
-shigling_size=5
-G=Shingling(doc1, shigling_size)
-G.shingle()
-H=Shingling(doc2, shigling_size)
-H.shingle()
-I=Shingling(doc3,shigling_size)
-I.shingle()
-J=Shingling(doc4,shigling_size)
-J.shingle()
+A=Shingling(doc1, shigling_size)
+B=Shingling(doc2, shigling_size)
+C=Shingling(doc3,shigling_size)
+D=Shingling(doc4,shigling_size)
+E=Shingling(doc5,shigling_size)
+F=Shingling(doc6,shigling_size)
+G=Shingling(doc7,shigling_size)
+H=Shingling(doc8,shigling_size)
+I=Shingling(doc9,shigling_size)
+J=Shingling(doc10,shigling_size)
 
 
 # Jaccard similarity of two of them
-intersec=CompareSets(G.hashed_values, H.hashed_values)
+intersec=CompareSets(A.hashed_values, B.hashed_values)
 js=intersec.jaccard()
 print 'Jaccard similarity:', js
 
@@ -221,17 +244,13 @@ print 'Jaccard similarity:', js
 
 # minHashing 
 #random.seed(5)
-n=100 # number of permutations
-minH=MinHashing([G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], n)
+minH=MinHashing([A.hashed_values, B.hashed_values, C.hashed_values, D.hashed_values, E.hashed_values, F.hashed_values, G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], n)
 minH.signMatrix()
 print 'Similarity of signatures:', minH.compareSignatures(minH.signM[:,0], minH.signM[:,1])
 
 
 # Locality sensitive hashing
-T=0.8
-r=5
-b=20
-#print minH.signM
 LSH=LSH(minH.signM,r,b,T)
 LSH.application()
+print 'Candidate pairs of signatures that agree on at least for', T*100, '% of their components:'
 print LSH.simPairs
