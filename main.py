@@ -8,7 +8,7 @@ import numpy as np
 import copy as cp
 import random
 import itertools
-import scipy 
+import sys
 
 ###########################################################
 #                       Class definition
@@ -126,8 +126,6 @@ class LSH:
 		self.bandM=np.zeros((self.b,self.signM.shape[1]), dtype=int)
 		self.simPairs=set()
 
-	# def rbCalculation:
-
 	def banding(self):
 		''' Partition of signM into b bands of r rowSign and construction of the associated matrix with hashed_values
 		'''
@@ -207,7 +205,7 @@ doc4='c.txt'
 doc1='Data/Part1/awards_1990/awd_1990_00/a9000255.txt'
 doc2='Data/Part1/awards_1990/awd_1990_00/a9000256.txt'
 doc3='Data/Part1/awards_1990/awd_1990_02/a9002020.txt'
-doc4='Data/Part1/awards_1990/awd_1990_02/a9002020.txt' # same document
+doc4='Data/Part1/awards_1990/awd_1990_02/a9002020.txt' # same document as doc3
 doc5='Data/Part1/awards_1990/awd_1990_00/a9000127.txt'
 doc6='Data/Part1/awards_1990/awd_1990_00/a9000143.txt'
 doc7='Data/Part1/awards_1994/awd_1994_02/a9402855.txt'
@@ -216,12 +214,22 @@ doc9='Data/Part1/awards_1994/awd_1994_18/a9418061.txt'
 doc10='Data/Part1/awards_1994/awd_1994_02/a9402021.txt'
 
 # Parameters
-shigling_size=9
-n=100 # number of permutations
-T=0.8
-r=5 # r*b=n !
-b=20
-
+if len(sys.argv)==6:
+	shigling_size=int(sys.argv[1])
+	n=int(sys.argv[2]) # number of permutations
+	T=float(sys.argv[3])
+	r=int(sys.argv[4]) # r*b=n !
+	b=int(sys.argv[5])
+	if r*b!=n:
+		sys.exit('Wrong provided parameters: make sure that the number of bands*number of rows in it is equal to the permutation number.')
+else:
+	print 'Works with default values: k=9, n=100, T=0.8, r=5 and b=20.'
+	shigling_size=9
+	n=100 # number of permutations
+	T=0.5
+	r=5 # r*b=n !
+	b=20
+	
 # Shingling of documents
 A=Shingling(doc1, shigling_size)
 B=Shingling(doc2, shigling_size)
@@ -236,8 +244,9 @@ J=Shingling(doc10,shigling_size)
 
 
 # Jaccard similarity of two of them
-intersec=CompareSets(A.hashed_values, B.hashed_values)
+intersec=CompareSets(C.hashed_values, D.hashed_values)
 js=intersec.jaccard()
+print 'Working with files', C.file, 'and', C.file
 print 'Jaccard similarity:', js
 
 
@@ -246,7 +255,7 @@ print 'Jaccard similarity:', js
 #random.seed(5)
 minH=MinHashing([A.hashed_values, B.hashed_values, C.hashed_values, D.hashed_values, E.hashed_values, F.hashed_values, G.hashed_values, H.hashed_values, I.hashed_values, J.hashed_values], n)
 minH.signMatrix()
-print 'Similarity of signatures:', minH.compareSignatures(minH.signM[:,0], minH.signM[:,1])
+print 'Similarity of signatures:', minH.compareSignatures(minH.signM[:,2], minH.signM[:,3])
 
 
 # Locality sensitive hashing
