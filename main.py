@@ -9,6 +9,7 @@ import copy as cp
 import random
 import itertools
 import sys
+import time
 
 ###########################################################
 #                       Class definition
@@ -202,6 +203,7 @@ class LSH:
 #                      MAIN
 ###########################################################
 
+start_time = time.time()
 ''' 
 # mini test files
 doc1='a.txt'
@@ -270,4 +272,4 @@ print 'Similarity of signatures:', minH.compareSignatures(minH.signM[:,2], minH.
 LSH=LSH(minH.signM,r,b,T, file_name)
 LSH.application()
 
-print LSH.simPairs
+print("--- %s seconds --- \n" % (time.time() - start_time))
